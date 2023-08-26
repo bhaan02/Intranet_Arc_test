@@ -1,10 +1,35 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { getSchedule, postCreateResources } from "../../service/service";
 import Form from "./components/Form/Form";
 import Modal from "./components/Modal/Modal";
 import Table from "./components/Table/Table";
 
 const Resource = () => {
 
+    const [schedule,setSchedule] = useState([])
+
+    const fetchSchedule = async () => {
+        try {
+          const response = await getSchedule();
+          setSchedule(response);
+        } catch (error) {
+          console.error("Error al obtener los recursos:", error);
+        }
+    };
+
+    const fetchPostCreateResources = async (payload) => {
+        try {
+          const response = await postCreateResources(payload);
+    
+          setSchedule(response);
+        } catch (error) {
+          console.error("Error al obtener los recursos:", error);
+        }
+      };
+
+    useEffect(() => {
+        fetchSchedule();
+    }, []);
 
     const userRaw = JSON.parse(sessionStorage.getItem("user"))
     const userLogend = {
@@ -15,10 +40,13 @@ const Resource = () => {
     }
 
     const [modalIsOpen, setModalIsOpen] = useState(false);
-    const [selectedCell, setSelectedCell] = useState({ filaIndex: -1, columnaKey: '' });
+    const [selectedCell, setSelectedCell] = useState({ row: -1, columna: '' });
+    const [reservedUser, setReservedUser] = useState("")
+    const [newResource, setNewResource] = useState("");
 
-    const openModal = (filaIndex, horarioIndex) => {
-        setSelectedCell({ filaIndex, horarioIndex });
+    const openModal = (row, colum, reservedUser) => {
+        setSelectedCell({ row, colum});
+        reservedUser ? setReservedUser(reservedUser) : setReservedUser("")
         setModalIsOpen(true);
     };
 
@@ -33,48 +61,24 @@ const Resource = () => {
         '15:00', '15:15', '15:30', '15:45', '16:00', '16:15', '16:30', '16:45',
         '17:00', '17:15', '17:30', '17:45', '18:00', '18:15', '18:30', '18:45', '19:00',
     ];
-
-    const [resources, setResources] = useState([
-    ]);
-
-    const [newResource, setNewResource] = useState({
-        resource: '',
-        status: '',
-        schedule: new Array(hours.length).fill(''),
-    });
-
-    const handleNombreClick = () => {
-        const { filaIndex, horarioIndex } = selectedCell;
-        const updatedResource = [...resources];
-        updatedResource[filaIndex].schedule[horarioIndex] = userLogend.name;
-        setResources(updatedResource);
-        closeModal();
-    };
     
 
-    const handleAddResource = () => {
-        if (newResource.resource) {
-        setResources((prevResources) => [
-            ...prevResources,
-            {
-            id: prevResources.length + 1,
-            resource: newResource.resource,
-            status: "Disponible",
-            schedule: [...newResource.schedule], // Copiamos el array de horarios
-            },
-        ]);
-        setNewResource({
-            resource: '',
-            status: '',
-            schedule: new Array(hours.length).fill(''),
+    const handleAddResource = (e) => {
+        e.preventDefault();
+
+        if (newResource !== "") {
+        fetchPostCreateResources({
+            resourceName: newResource,
+            boxes: []
+
         });
         }
     };
         return (
             <>
-                <Modal isOpen={modalIsOpen} onClose={closeModal} handleNombreClick= {handleNombreClick}/>
+                <Modal isOpen={modalIsOpen} onClose={closeModal} reservedUser ={reservedUser}/>
                 <Form newResource = {newResource} setNewResource={setNewResource} handleAddResource={handleAddResource}/>
-                <Table hours = {hours} resources = {resources} openModal={openModal}/>
+                <Table hours = {hours} schedule={schedule} openModal={openModal}/>
             </>
         )
 }

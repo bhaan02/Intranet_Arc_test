@@ -9,8 +9,8 @@ const Form = ({newResource, setNewResource, handleAddResource}) =>{
                     <label>Resource:</label>
                     <input
                         type="text"
-                        value={newResource.resource}
-                        onChange={(e) => setNewResource({ ...newResource, resource: e.target.value })} 
+                        value={newResource}
+                        onChange={(e) => setNewResource(e.target.value)} 
                     />
                 </div>
                 <button onClick={handleAddResource}>Add Resource</button>
